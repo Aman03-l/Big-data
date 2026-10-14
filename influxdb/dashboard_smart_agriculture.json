@@ -1,0 +1,291 @@
+﻿{
+  "meta": {
+    "version": "1",
+    "type": "dashboard"
+  },
+  "content": {
+    "label": "Smart Agriculture & Predictive Farming",
+    "description": "Monitoring kelembaban tanah, suhu & kelembaban udara, intensitas cahaya, dan prediksi irigasi berbasis ESP8266 + InfluxDB v2.",
+    "variables": [
+      {
+        "name": "bucket",
+        "label": "Bucket",
+        "type": "query",
+        "arguments": {
+          "query": "buckets()",
+          "language": "flux"
+        },
+        "selected": null
+      }
+    ],
+    "cells": [
+      {
+        "x": 0,
+        "y": 0,
+        "w": 3,
+        "h": 4,
+        "view": {
+          "name": "Kelembaban Tanah",
+          "type": "gauge",
+          "properties": {
+            "queries": [
+              {
+                "text": "from(bucket: \"agriculture\") |> range(start: v.timeRangeStart, stop: v.timeRangeStop) |> filter(fn: (r) => r._measurement == \"agriculture\" and r._field == \"soil_moisture\") |> last()",
+                "editMode": "advanced",
+                "name": "soil_moisture"
+              }
+            ],
+            "axes": {
+              "x": { "bounds": ["0", "100"], "label": "%" },
+              "y": { "bounds": ["0", "100"], "label": "%" }
+            },
+            "colors": [
+              { "id": "a1000000-0000-0000-0000-000000000001", "type": "min", "hex": "#e74c3c", "name": "Kering" },
+              { "id": "a1000000-0000-0000-0000-000000000002", "type": "max", "hex": "#2ecc71", "name": "Basah" }
+            ],
+            "gaugeColors": [
+              { "id": "a1000000-0000-0000-0000-000000000003", "type": "min", "hex": "#e74c3c", "name": "Kering" },
+              { "id": "a1000000-0000-0000-0000-000000000004", "type": "max", "hex": "#2ecc71", "name": "Basah" }
+            ],
+            "decimalPlaces": { "isEnforced": true, "digits": 1 },
+            "prefix": "",
+            "suffix": " %",
+            "tickPrefix": "",
+            "tickSuffix": "",
+            "note": "Kelembaban tanah kapasitif (0-100%). Di bawah 30% butuh irigasi."
+          }
+        },
+        "queries": [
+          {
+            "text": "from(bucket: \"agriculture\") |> range(start: v.timeRangeStart, stop: v.timeRangeStop) |> filter(fn: (r) => r._measurement == \"agriculture\" and r._field == \"soil_moisture\") |> last()",
+            "editMode": "advanced",
+            "name": "Kelembaban Tanah",
+            "query": "from(bucket: \"agriculture\") |> range(start: v.timeRangeStart, stop: v.timeRangeStop) |> filter(fn: (r) => r._measurement == \"agriculture\" and r._field == \"soil_moisture\") |> last()"
+          }
+        ]
+      },
+      {
+        "x": 3,
+        "y": 0,
+        "w": 3,
+        "h": 4,
+        "view": {
+          "name": "Skor Kesehatan Tanaman",
+          "type": "singleStat",
+          "properties": {
+            "queries": [
+              {
+                "text": "from(bucket: \"agriculture\") |> range(start: v.timeRangeStart, stop: v.timeRangeStop) |> filter(fn: (r) => r._measurement == \"agriculture\" and r._field == \"health_score\") |> last()",
+                "editMode": "advanced",
+                "name": "health_score"
+              }
+            ],
+            "colors": [
+              { "id": "a1000000-0000-0000-0000-000000000005", "type": "text", "hex": "#ffffff", "name": "Text" }
+            ],
+            "decimalPlaces": { "isEnforced": true, "digits": 0 },
+            "prefix": "",
+            "suffix": " / 100",
+            "note": "Skor kesehatan gabungan: kelembaban tanah, suhu, dan cahaya."
+          }
+        },
+        "queries": [
+          {
+            "text": "from(bucket: \"agriculture\") |> range(start: v.timeRangeStart, stop: v.timeRangeStop) |> filter(fn: (r) => r._measurement == \"agriculture\" and r._field == \"health_score\") |> last()",
+            "editMode": "advanced",
+            "name": "Skor Kesehatan",
+            "query": "from(bucket: \"agriculture\") |> range(start: v.timeRangeStart, stop: v.timeRangeStop) |> filter(fn: (r) => r._measurement == \"agriculture\" and r._field == \"health_score\") |> last()"
+          }
+        ]
+      },
+      {
+        "x": 6,
+        "y": 0,
+        "w": 6,
+        "h": 4,
+        "view": {
+          "name": "Prediksi & Status Irigasi",
+          "type": "table",
+          "properties": {
+            "queries": [
+              {
+                "text": "from(bucket: \"agriculture\") |> range(start: v.timeRangeStart, stop: v.timeRangeStop) |> filter(fn: (r) => r._measurement == \"agriculture\") |> filter(fn: (r) => r._field == \"predict_hours_to_dry\" or r._field == \"irrigation_needed\" or r._field == \"predict_slope\") |> last() |> pivot(rowKey: [\"_time\"], columnKey: [\"_field\"], valueColumn: \"_value\")",
+                "editMode": "advanced",
+                "name": "prediction"
+              }
+            ],
+            "tableOptions": {
+              "verticalTimeAxis": true,
+              "sortBy": { "internalName": "_time", "displayName": "Time", "visible": true }
+            },
+            "fieldOptions": [],
+            "decimalPlaces": { "isEnforced": true, "digits": 2 },
+            "note": "Jam sampai tanah kering, laju pengeringan, dan status butuh irigasi."
+          }
+        },
+        "queries": [
+          {
+            "text": "from(bucket: \"agriculture\") |> range(start: v.timeRangeStart, stop: v.timeRangeStop) |> filter(fn: (r) => r._measurement == \"agriculture\") |> filter(fn: (r) => r._field == \"predict_hours_to_dry\" or r._field == \"irrigation_needed\" or r._field == \"predict_slope\") |> last() |> pivot(rowKey: [\"_time\"], columnKey: [\"_field\"], valueColumn: \"_value\")",
+            "editMode": "advanced",
+            "name": "Prediksi & Irigasi",
+            "query": "from(bucket: \"agriculture\") |> range(start: v.timeRangeStart, stop: v.timeRangeStop) |> filter(fn: (r) => r._measurement == \"agriculture\") |> filter(fn: (r) => r._field == \"predict_hours_to_dry\" or r._field == \"irrigation_needed\" or r._field == \"predict_slope\") |> last() |> pivot(rowKey: [\"_time\"], columnKey: [\"_field\"], valueColumn: \"_value\")"
+          }
+        ]
+      },
+      {
+        "x": 0,
+        "y": 4,
+        "w": 6,
+        "h": 4,
+        "view": {
+          "name": "Suhu Udara (DHT22)",
+          "type": "xy",
+          "properties": {
+            "queries": [
+              {
+                "text": "from(bucket: \"agriculture\") |> range(start: v.timeRangeStart, stop: v.timeRangeStop) |> filter(fn: (r) => r._measurement == \"agriculture\" and r._field == \"air_temperature\") |> aggregateWindow(every: v.windowPeriod, fn: mean, createEmpty: false)",
+                "editMode": "advanced",
+                "name": "air_temperature"
+              }
+            ],
+            "axes": {
+              "x": { "bounds": ["auto", "auto"], "label": "", "prefix": "", "suffix": "" },
+              "y": { "bounds": ["auto", "auto"], "label": "Suhu (C)", "prefix": "", "suffix": " C" }
+            },
+            "colors": [
+              { "id": "a1000000-0000-0000-0000-000000000006", "type": "scale", "hex": "#f39c12", "name": "Suhu", "value": 0 }
+            ],
+            "geom": "line",
+            "position": "overlaid",
+            "legend": { "type": "static", "orientation": "top", "displayMode": "visible" },
+            "note": "Suhu udara dari DHT22. Suhu di atas 35C menurunkan skor kesehatan."
+          }
+        },
+        "queries": [
+          {
+            "text": "from(bucket: \"agriculture\") |> range(start: v.timeRangeStart, stop: v.timeRangeStop) |> filter(fn: (r) => r._measurement == \"agriculture\" and r._field == \"air_temperature\") |> aggregateWindow(every: v.windowPeriod, fn: mean, createEmpty: false)",
+            "editMode": "advanced",
+            "name": "Suhu Udara",
+            "query": "from(bucket: \"agriculture\") |> range(start: v.timeRangeStart, stop: v.timeRangeStop) |> filter(fn: (r) => r._measurement == \"agriculture\" and r._field == \"air_temperature\") |> aggregateWindow(every: v.windowPeriod, fn: mean, createEmpty: false)"
+          }
+        ]
+      },
+      {
+        "x": 6,
+        "y": 4,
+        "w": 6,
+        "h": 4,
+        "view": {
+          "name": "Kelembaban Udara (DHT22)",
+          "type": "xy",
+          "properties": {
+            "queries": [
+              {
+                "text": "from(bucket: \"agriculture\") |> range(start: v.timeRangeStart, stop: v.timeRangeStop) |> filter(fn: (r) => r._measurement == \"agriculture\" and r._field == \"air_humidity\") |> aggregateWindow(every: v.windowPeriod, fn: mean, createEmpty: false)",
+                "editMode": "advanced",
+                "name": "air_humidity"
+              }
+            ],
+            "axes": {
+              "x": { "bounds": ["auto", "auto"], "label": "", "prefix": "", "suffix": "" },
+              "y": { "bounds": ["0", "100"], "label": "Kelembaban (%)", "prefix": "", "suffix": " %" }
+            },
+            "colors": [
+              { "id": "a1000000-0000-0000-0000-000000000007", "type": "scale", "hex": "#3498db", "name": "Kelembaban", "value": 0 }
+            ],
+            "geom": "line",
+            "position": "overlaid",
+            "legend": { "type": "static", "orientation": "top", "displayMode": "visible" },
+            "note": "Kelembaban udara relatif dari DHT22."
+          }
+        },
+        "queries": [
+          {
+            "text": "from(bucket: \"agriculture\") |> range(start: v.timeRangeStart, stop: v.timeRangeStop) |> filter(fn: (r) => r._measurement == \"agriculture\" and r._field == \"air_humidity\") |> aggregateWindow(every: v.windowPeriod, fn: mean, createEmpty: false)",
+            "editMode": "advanced",
+            "name": "Kelembaban Udara",
+            "query": "from(bucket: \"agriculture\") |> range(start: v.timeRangeStart, stop: v.timeRangeStop) |> filter(fn: (r) => r._measurement == \"agriculture\" and r._field == \"air_humidity\") |> aggregateWindow(every: v.windowPeriod, fn: mean, createEmpty: false)"
+          }
+        ]
+      },
+      {
+        "x": 0,
+        "y": 8,
+        "w": 6,
+        "h": 4,
+        "view": {
+          "name": "Intensitas Cahaya (BH1750)",
+          "type": "xy",
+          "properties": {
+            "queries": [
+              {
+                "text": "from(bucket: \"agriculture\") |> range(start: v.timeRangeStart, stop: v.timeRangeStop) |> filter(fn: (r) => r._measurement == \"agriculture\" and r._field == \"light_lux\") |> aggregateWindow(every: v.windowPeriod, fn: mean, createEmpty: false)",
+                "editMode": "advanced",
+                "name": "light_lux"
+              }
+            ],
+            "axes": {
+              "x": { "bounds": ["auto", "auto"], "label": "", "prefix": "", "suffix": "" },
+              "y": { "bounds": ["auto", "auto"], "label": "Cahaya (lux)", "prefix": "", "suffix": " lx" }
+            },
+            "colors": [
+              { "id": "a1000000-0000-0000-0000-000000000008", "type": "scale", "hex": "#f1c40f", "name": "Cahaya", "value": 0 }
+            ],
+            "geom": "line",
+            "position": "overlaid",
+            "legend": { "type": "static", "orientation": "top", "displayMode": "visible" },
+            "note": "Intensitas cahaya dari BH1750 (lux)."
+          }
+        },
+        "queries": [
+          {
+            "text": "from(bucket: \"agriculture\") |> range(start: v.timeRangeStart, stop: v.timeRangeStop) |> filter(fn: (r) => r._measurement == \"agriculture\" and r._field == \"light_lux\") |> aggregateWindow(every: v.windowPeriod, fn: mean, createEmpty: false)",
+            "editMode": "advanced",
+            "name": "Intensitas Cahaya",
+            "query": "from(bucket: \"agriculture\") |> range(start: v.timeRangeStart, stop: v.timeRangeStop) |> filter(fn: (r) => r._measurement == \"agriculture\" and r._field == \"light_lux\") |> aggregateWindow(every: v.windowPeriod, fn: mean, createEmpty: false)"
+          }
+        ]
+      },
+      {
+        "x": 6,
+        "y": 8,
+        "w": 6,
+        "h": 4,
+        "view": {
+          "name": "Riwayat Kelembaban Tanah",
+          "type": "xy",
+          "properties": {
+            "queries": [
+              {
+                "text": "from(bucket: \"agriculture\") |> range(start: v.timeRangeStart, stop: v.timeRangeStop) |> filter(fn: (r) => r._measurement == \"agriculture\" and r._field == \"soil_moisture\") |> aggregateWindow(every: v.windowPeriod, fn: mean, createEmpty: false)",
+                "editMode": "advanced",
+                "name": "soil_moisture"
+              }
+            ],
+            "axes": {
+              "x": { "bounds": ["auto", "auto"], "label": "", "prefix": "", "suffix": "" },
+              "y": { "bounds": ["0", "100"], "label": "Kelembaban Tanah (%)", "prefix": "", "suffix": " %" }
+            },
+            "colors": [
+              { "id": "a1000000-0000-0000-0000-000000000009", "type": "scale", "hex": "#27ae60", "name": "Soil", "value": 0 }
+            ],
+            "geom": "line",
+            "position": "overlaid",
+            "legend": { "type": "static", "orientation": "top", "displayMode": "visible" },
+            "note": "Tren kelembaban tanah. Turun tajam berarti pengeringan cepat."
+          }
+        },
+        "queries": [
+          {
+            "text": "from(bucket: \"agriculture\") |> range(start: v.timeRangeStart, stop: v.timeRangeStop) |> filter(fn: (r) => r._measurement == \"agriculture\" and r._field == \"soil_moisture\") |> aggregateWindow(every: v.windowPeriod, fn: mean, createEmpty: false)",
+            "editMode": "advanced",
+            "name": "Riwayat Kelembaban Tanah",
+            "query": "from(bucket: \"agriculture\") |> range(start: v.timeRangeStart, stop: v.timeRangeStop) |> filter(fn: (r) => r._measurement == \"agriculture\" and r._field == \"soil_moisture\") |> aggregateWindow(every: v.windowPeriod, fn: mean, createEmpty: false)"
+          }
+        ]
+      }
+    ]
+  }
+}
+
+

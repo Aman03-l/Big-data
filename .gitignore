@@ -1,0 +1,29 @@
+# --- ESP32 / PlatformIO ---
+.pio/
+.pioenvs/
+.piolibdeps/
+.vscode/
+build/
+*.bin
+*.elf
+*.map
+
+# --- Arduino ---
+build/
+*.hex
+
+# --- Secrets / lokal ---
+influxdb/influx_token.json
+firmware/SmartAgriculture/config_secret.h
+*.local
+
+# --- Python ---
+__pycache__/
+*.pyc
+.venv/
+venv/
+
+# --- OS ---
+.DS_Store
+Thumbs.db
+desktop.ini
