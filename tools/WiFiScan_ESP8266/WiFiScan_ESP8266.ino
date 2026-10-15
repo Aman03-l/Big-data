@@ -1,19 +1,7 @@
-// =====================================================================
-//  DIAGNOSA WIFI ESP8266 - Sketch sederhana untuk uji koneksi
-//  ------------------------------------------------------------------
-//  Cara pakai:
-//    1. Buka file ini di Arduino IDE
-//    2. Board: "NodeMCU 1.0 (ESP-12E Module)"
-//    3. Ganti WIFI_SSID / WIFI_PASSWORD di bawah
-//    4. Upload, buka Serial Monitor 115200
-// =====================================================================
-
 #include <ESP8266WiFi.h>
 
-// ====== GANTI INI ======
 #define WIFI_SSID      "Aaa"
-#define WIFI_PASSWORD  ""     // kosongkan ("") untuk WiFi TANPA password
-// =======================
+#define WIFI_PASSWORD  ""
 
 const char* statusStr(wl_status_t s) {
   switch (s) {
@@ -47,7 +35,6 @@ void setup() {
   WiFi.disconnect(true);
   delay(500);
 
-  // ---- SCAN ----
   Serial.println(F(">>> SCAN WiFi..."));
   int n = WiFi.scanNetworks(false, true);
   Serial.printf(">>> Hasil scan: %d\n", n);
@@ -70,7 +57,6 @@ void setup() {
   }
   WiFi.scanDelete();
 
-  // ---- CONNECT ----
   Serial.println();
   Serial.printf(">>> Coba connect ke \"%s\" ...\n", WIFI_SSID);
   if (strlen(WIFI_PASSWORD) == 0) {

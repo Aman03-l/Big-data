@@ -1,30 +1,3 @@
-// =====================================================================
-//  SMART AGRICULTURE & PREDICTIVE FARMING - ESP8266  (VERSI 1 FILE)
-//  ------------------------------------------------------------------
-//  Board  : ESP8266 (NodeMCU v3 / Wemos D1 mini / ESP-12E/F)
-//  Sensor :
-//    - Capacitive Soil Moisture (ANALOG)  -> A0
-//    - DHT22 Temp & Humidity (DIGITAL)    -> D5 (GPIO14)
-//    - BH1750 Light Intensity (I2C)       -> SDA D2(GPIO4) / SCL D1(GPIO5)
-//  Kirim data ke InfluxDB v2, lihat di dashboard InfluxDB.
-//
-//  CATATAN ESP8266:
-//    * ADC hanya 1 pin: A0, resolusi 10-bit (0-1023).
-//    * NodeMCU/Wemos D1 mini: A0 sudah ada pembagi tegangan -> 0-3.3V OK.
-//    * Modul ESP-12 telanjang: A0 maks 1.0V -> WAJIB pembagi tegangan.
-//    * I2C default: D1 (SCL) & D2 (SDA).
-//
-//  CARA PAKAI (Arduino IDE):
-//    1. Install library:
-//         - "DHT sensor library" (Adafruit)
-//         - "Adafruit Unified Sensor"
-//         - "BH1750" (Christopher Laws)
-//       Board ESP8266 sudah termasuk di core (lihat docs).
-//    2. Board: "NodeMCU 1.0 (ESP-12E Module)"
-//    3. Sesuaikan daftar WIFI_LIST di bawah
-//    4. Upload, buka Serial Monitor 115200
-// =====================================================================
-
 #include <ESP8266WiFi.h>
 #include <ESP8266HTTPClient.h>
 #include <WiFiClient.h>
@@ -34,25 +7,14 @@
 #include <DHT.h>
 #include <BH1750.h>
 
-// =====================================================================
-//  =======================  KONFIGURASI  =============================
-// =====================================================================
-
-// ----- WiFi -----
-// Firmware mencoba SEMUA WiFi di daftar ini secara berurutan.
-// Password kosong ("") = jaringan terbuka (tanpa password).
 struct WifiCred { const char* ssid; const char* pass; };
 static const WifiCred WIFI_LIST[] = {
-  { "Aaa", "" },                // <-- prioritas 1 (TANPA PASSWORD / terbuka)
+  { "Aaa", "" },
 };
 static const int WIFI_LIST_COUNT = sizeof(WIFI_LIST) / sizeof(WIFI_LIST[0]);
 
-#define WIFI_TIMEOUT_MS  15000    // timeout per jaringan (ms)
+#define WIFI_TIMEOUT_MS  15000
 
-// ----- InfluxDB v2 -----
-// Server ditemukan lewat NAMA (mDNS) supaya tidak perlu ganti IP terus.
-//   INFLUX_HOST     : hostname PC (tanpa ".local"). Cek: buka CMD, ketik "hostname"
-//   INFLUX_FALLBACK : IP cadangan kalau mDNS gagal (cek: ipconfig)
 #define INFLUX_HOST      "Salman"
 #define INFLUX_FALLBACK  "10.109.10.188"
 #define INFLUX_PORT      8086
@@ -60,30 +22,22 @@ static const int WIFI_LIST_COUNT = sizeof(WIFI_LIST) / sizeof(WIFI_LIST[0]);
 #define INFLUX_BUCKET    "agriculture"
 #define INFLUX_TOKEN     "smart-agri-dev-token"
 
-// ----- Identitas device (tag) -----
 #define DEVICE_ID        "esp8266-garden-01"
 #define LOCATION_TAG     "greenhouse-1"
 
-// ----- Pin (KHUSUS ESP8266 / NodeMCU) -----
-#define PIN_SOIL_ADC     A0      // satu-satunya pin analog di ESP8266
-#define PIN_DHT          14      // D5 (GPIO14)
-#define PIN_I2C_SDA      4       // D2 (GPIO4)
-#define PIN_I2C_SCL      5       // D1 (GPIO5)
+#define PIN_SOIL_ADC     A0
+#define PIN_DHT          14
+#define PIN_I2C_SDA      4
+#define PIN_I2C_SCL      5
 
-// ----- Sensor -----
-#define DHT_TYPE         DHT11   // GANTI ke DHT11 (sesuai sensor Anda)
-#define BH1750_ADDR      0x23    // 0x23 (ADDR->GND) atau 0x5C (ADDR->VCC)
+#define DHT_TYPE         DHT11
+#define BH1750_ADDR      0x23
 #define SOIL_ADC_SAMPLES 16
 
-// ----- Kalibrasi soil (ADC 10-bit, 0-1023) -----
-// Nilai ini HASIL KALIBRASI sensor Anda (lihat docs/CALIBRATION.md).
-//   - Di udara (kering) : raw = 1022  -> 0%
-//   - Di air (basah)    : raw = 473   -> 100%
-#define SOIL_ADC_DRY     1022    // nilai ADC di udara (0%)
-#define SOIL_ADC_WET     473     // nilai ADC di air (100%)
-#define SOIL_ADC_MAX     1023    // resolusi ADC ESP8266 (10-bit)
+#define SOIL_ADC_DRY     1022
+#define SOIL_ADC_WET     473
+#define SOIL_ADC_MAX     1023
 
-// ----- Ambang batas -----
 #define SOIL_MOISTURE_MIN   30.0f
 #define SOIL_MOISTURE_MAX   80.0f
 #define SOIL_CRITICAL       20.0f
@@ -91,15 +45,11 @@ static const int WIFI_LIST_COUNT = sizeof(WIFI_LIST) / sizeof(WIFI_LIST[0]);
 #define LIGHT_LOW_LUX       5000.0f
 #define LIGHT_HIGH_LUX      60000.0f
 
-// ----- Timing -----
-#define SAMPLE_INTERVAL_MS   60000UL   // 60 detik
+#define SAMPLE_INTERVAL_MS   60000UL
 #define SERIAL_BAUD          115200
 #define NTP_SERVER           "pool.ntp.org"
-#define NTP_GMT_OFFSET_SEC   (7 * 3600) // WIB = UTC+7
+#define NTP_GMT_OFFSET_SEC   (7 * 3600)
 
-// =====================================================================
-//  =====================  OBJEK & VARIABEL  ==========================
-// =====================================================================
 DHT    dht(PIN_DHT, DHT_TYPE);
 BH1750 bh1750;
 bool   bhReady = false;
@@ -123,7 +73,6 @@ struct Prediction {
   char  status[48];
 };
 
-// riwayat untuk regresi linier
 #define HIST_SIZE 12
 static float    histSoil[HIST_SIZE];
 static uint32_t histTime[HIST_SIZE];
@@ -133,11 +82,8 @@ static int      histHead  = 0;
 static uint32_t gLastSample = 0;
 static bool     gTimeSynced = false;
 
-// =====================================================================
-//  =========================  SENSOR  ================================
-// =====================================================================
 void sensorsBegin() {
-  // ESP8266: A0 otomatis 10-bit (0-1023), tidak perlu analogReadResolution.
+
   dht.begin();
 
   Wire.begin(PIN_I2C_SDA, PIN_I2C_SCL);
@@ -188,10 +134,6 @@ void readSensors(SensorData &out) {
   }
 }
 
-
-// =====================================================================
-//  =======================  PREDICTOR  ===============================
-// =====================================================================
 void predictorBegin() { histCount = 0; histHead = 0; }
 
 static void pushHistory(float soilPct, uint32_t epochSec) {
@@ -258,9 +200,6 @@ Prediction computePrediction(const SensorData &d) {
   return p;
 }
 
-// =====================================================================
-//  =======================  INFLUXDB  ================================
-// =====================================================================
 static String escapeTag(const char *s) {
   String out;
   for (const char *p = s; *p; ++p) {
@@ -275,15 +214,10 @@ static String fnum(float v, int dec = 2) {
   return String(v, dec);
 }
 
-// Cari IP server InfluxDB:
-//   1) coba resolve hostname (mDNS ".local" atau DNS biasa)
-//   2) kalau gagal, pakai INFLUX_FALLBACK (IP)
-// Hasil disimpan agar tidak resolve berulang kali.
 static String resolveServerHost() {
   static String cached;
   if (cached.length() > 0) return cached;
 
-  // Coba resolve "Salman.local" lewat WiFi.hostByName (mDNS/LLMNR)
   IPAddress ip;
   String name = String(INFLUX_HOST) + ".local";
   if (WiFi.hostByName(name.c_str(), ip)) {
@@ -291,7 +225,7 @@ static String resolveServerHost() {
     Serial.printf("[INFLUX] resolve %s -> %s\n", name.c_str(), cached.c_str());
     return cached;
   }
-  // Fallback ke IP
+
   Serial.printf("[INFLUX] resolve gagal, pakai IP: %s\n", INFLUX_FALLBACK);
   cached = INFLUX_FALLBACK;
   return cached;
@@ -338,9 +272,6 @@ bool influxWrite(const SensorData &d, const Prediction &p, time_t epochSec) {
   return ok;
 }
 
-// =====================================================================
-//  =====================  WIFI & NTP  ================================
-// =====================================================================
 static const char* wifiStatusStr(wl_status_t s) {
   switch (s) {
     case WL_IDLE_STATUS:     return "IDLE";
@@ -412,7 +343,7 @@ static bool tryConnect(const char* ssid, const char* pass) {
 void connectWiFi() {
   for (int i = 0; i < WIFI_LIST_COUNT; i++) {
     if (tryConnect(WIFI_LIST[i].ssid, WIFI_LIST[i].pass)) {
-      // Mulai mDNS agar bisa menemukan server InfluxDB lewat nama
+
       if (MDNS.begin("esp8266-agri")) {
         Serial.println(F("[mDNS] Aktif (esp8266-agri.local)"));
       }
@@ -445,10 +376,6 @@ void syncTime() {
   Serial.println(F(" GAGAL (lanjut tanpa timestamp presisi)."));
 }
 
-
-// =====================================================================
-//  =====================  SAMPLING CYCLE  ============================
-// =====================================================================
 void doSample() {
   Serial.println(F("\n=================== SAMPLING ==================="));
   SensorData d;
@@ -456,7 +383,7 @@ void doSample() {
   Prediction p = computePrediction(d);
 
   Serial.printf("Soil      : %.1f %%  (raw=%d, %.3f V)\n", d.soilPercent, d.soilRaw, d.soilVoltage);
-  // Peringatan: nilai mentok = kemungkinan sensor tidak tersambung / kalibrasi salah
+
   if (d.soilRaw >= SOIL_ADC_MAX - 2) {
     Serial.println(F("  [WARN] soil_raw mentok maksimum! Cek sambungan A0/VCC/GND sensor soil,"));
     Serial.println(F("         atau kalibrasi SOIL_ADC_DRY (lihat docs/CALIBRATION.md)."));
@@ -478,9 +405,6 @@ void doSample() {
     Serial.println(F("[INFLUX] Dilewati: WiFi tidak terhubung."));
 }
 
-// =====================================================================
-//  =========================  SETUP  =================================
-// =====================================================================
 void setup() {
   Serial.begin(SERIAL_BAUD);
   delay(300);
@@ -498,9 +422,6 @@ void setup() {
   gLastSample = millis();
 }
 
-// =====================================================================
-//  ==========================  LOOP  =================================
-// =====================================================================
 void loop() {
   if (millis() - gLastSample >= SAMPLE_INTERVAL_MS) {
     gLastSample = millis();
@@ -516,4 +437,3 @@ void loop() {
   }
   delay(100);
 }
-

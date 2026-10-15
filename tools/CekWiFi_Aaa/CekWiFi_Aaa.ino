@@ -1,25 +1,8 @@
-// =====================================================================
-//  CEK KONEKSI WIFI ESP8266 - "Aaa" (TANPA PASSWORD)
-//  ------------------------------------------------------------------
-//  Sketch sederhana untuk menguji apakah ESP8266 bisa connect ke
-//  WiFi "Aaa" yang terbuka (open / tanpa password).
-//
-//  CARA PAKAI:
-//    1. Buka file ini di Arduino IDE
-//    2. Tools > Board > "NodeMCU 1.0 (ESP-12E Module)"
-//    3. Tools > Port > COM... (pilih yang muncul saat modul dicolok)
-//    4. Klik Upload
-//    5. Buka Serial Monitor (115200 baud)
-// =====================================================================
-
 #include <ESP8266WiFi.h>
 
-// ======================= KONFIGURASI =======================
 #define WIFI_SSID      "Aaa"
-// WiFi terbuka -> password KOSONG. Jangan diisi!
-// ===========================================================
 
-#define WIFI_TIMEOUT_MS  20000   // timeout koneksi (20 detik)
+#define WIFI_TIMEOUT_MS  20000
 
 void setup() {
   Serial.begin(115200);
@@ -33,7 +16,6 @@ void setup() {
   Serial.println(F("  Password    : (TIDAK ADA / terbuka)"));
   Serial.println(F("----------------------------------------------"));
 
-  // Info modul
   Serial.printf("  Chip ID     : %08X\n", ESP.getChipId());
   Serial.printf("  Core        : %s\n", ESP.getCoreVersion().c_str());
   Serial.printf("  Flash       : %d KB\n", ESP.getFlashChipRealSize() / 1024);
@@ -41,12 +23,10 @@ void setup() {
   Serial.printf("  MAC address : %s\n", WiFi.macAddress().c_str());
   Serial.println(F("----------------------------------------------"));
 
-  // --- Mode station ---
   WiFi.mode(WIFI_STA);
   WiFi.disconnect(true);
   delay(500);
 
-  // --- SCAN dulu: apakah "Aaa" terlihat? ---
   Serial.println(F("[1] Scan jaringan sekitar..."));
   int n = WiFi.scanNetworks(false, true);
   Serial.printf("    Hasil scan: %d jaringan\n", n);
@@ -74,10 +54,9 @@ void setup() {
     Serial.println(F("    -> Cek ejaan SSID, atau jaringan terlalu jauh."));
   }
 
-  // --- CONNECT (tanpa password) ---
   Serial.println(F("----------------------------------------------"));
   Serial.printf("[3] Menyambung ke \"%s\" (terbuka) ...\n", WIFI_SSID);
-  WiFi.begin(WIFI_SSID);        // <== TANPA password
+  WiFi.begin(WIFI_SSID);
 
   uint32_t start = millis();
   while (WiFi.status() != WL_CONNECTED && millis() - start < WIFI_TIMEOUT_MS) {
@@ -86,7 +65,6 @@ void setup() {
   }
   Serial.println();
 
-  // --- HASIL ---
   Serial.println(F("----------------------------------------------"));
   if (WiFi.status() == WL_CONNECTED) {
     Serial.println(F("  BERHASIL TERHUBUNG!"));
@@ -102,10 +80,9 @@ void setup() {
     Serial.printf("  MAC      : %s\n", WiFi.macAddress().c_str());
     Serial.println(F("=============================================="));
 
-    // --- TES KONEKSI ke server InfluxDB di PC ---
     Serial.println(F("[4] Tes koneksi ke server (InfluxDB PC)..."));
     WiFiClient client;
-    // IP PC: 10.4.75.52, port InfluxDB 8086
+
     if (client.connect("10.4.75.52", 8086)) {
       Serial.println(F("    OK - Server terjangkau (10.4.75.52:8086)"));
       Serial.println(F("    -> ESP8266 siap kirim data ke InfluxDB!"));
@@ -141,7 +118,7 @@ void setup() {
 }
 
 void loop() {
-  // Pantau koneksi tiap 10 detik
+
   delay(10000);
   if (WiFi.status() == WL_CONNECTED) {
     Serial.printf("[loop] Masih terhubung. IP=%s RSSI=%d dBm\n",
