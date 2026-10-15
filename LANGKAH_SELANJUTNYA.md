@@ -7,7 +7,7 @@
 - [x] **Dashboard "Smart Agriculture & Predictive Farming"** + 7 panel dibuat
 - [x] Variabel dashboard `bucket` = `agriculture` dibuat
 - [x] Jalur tulis & baca data **terbukti bekerja** (diuji dengan data contoh)
-- [x] Konfigurasi firmware sudah diisi IP PC Anda: `10.171.39.188`
+- [x] Konfigurasi firmware sudah diisi IP PC Anda: `10.4.75.52` (cek ulang: `ipconfig`)
 
 **Buka dashboard:** http://localhost:8086 → login `admin` / `admin12345`
 

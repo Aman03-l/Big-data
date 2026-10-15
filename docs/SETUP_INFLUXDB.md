@@ -53,7 +53,7 @@ static const WifiCred WIFI_LIST[] = {
 };
 
 // ----- InfluxDB v2 -----
-#define INFLUX_URL       "http://10.171.39.188:8086"  // IP PC/server InfluxDB
+#define INFLUX_URL       "http://10.4.75.52:8086"  // IP PC/server InfluxDB (cek: ipconfig)
 #define INFLUX_ORG       "smart-agri"
 #define INFLUX_BUCKET    "agriculture"
 #define INFLUX_TOKEN     "smart-agri-dev-token"

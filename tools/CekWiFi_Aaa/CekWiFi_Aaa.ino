@@ -105,9 +105,9 @@ void setup() {
     // --- TES KONEKSI ke server InfluxDB di PC ---
     Serial.println(F("[4] Tes koneksi ke server (InfluxDB PC)..."));
     WiFiClient client;
-    // IP PC: 10.171.39.188, port InfluxDB 8086
-    if (client.connect("10.171.39.188", 8086)) {
-      Serial.println(F("    OK - Server terjangkau (10.171.39.188:8086)"));
+    // IP PC: 10.4.75.52, port InfluxDB 8086
+    if (client.connect("10.4.75.52", 8086)) {
+      Serial.println(F("    OK - Server terjangkau (10.4.75.52:8086)"));
       Serial.println(F("    -> ESP8266 siap kirim data ke InfluxDB!"));
       client.stop();
     } else {

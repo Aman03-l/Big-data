@@ -49,8 +49,8 @@ static const int WIFI_LIST_COUNT = sizeof(WIFI_LIST) / sizeof(WIFI_LIST[0]);
 #define WIFI_TIMEOUT_MS  15000    // timeout per jaringan (ms)
 
 // ----- InfluxDB v2 -----
-// IP LAN PC/server InfluxDB. PC ini = 10.171.39.188
-#define INFLUX_URL       "http://10.171.39.188:8086"
+// IP LAN PC/server InfluxDB. Cek IP terbaru dengan: ipconfig
+#define INFLUX_URL       "http://10.4.75.52:8086"
 #define INFLUX_ORG       "smart-agri"
 #define INFLUX_BUCKET    "agriculture"
 #define INFLUX_TOKEN     "smart-agri-dev-token"
