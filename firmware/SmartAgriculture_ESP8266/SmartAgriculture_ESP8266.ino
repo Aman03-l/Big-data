@@ -28,6 +28,7 @@
 #include <ESP8266WiFi.h>
 #include <ESP8266HTTPClient.h>
 #include <WiFiClient.h>
+#include <ESP8266mDNS.h>
 #include <Wire.h>
 #include <time.h>
 #include <DHT.h>
@@ -49,8 +50,12 @@ static const int WIFI_LIST_COUNT = sizeof(WIFI_LIST) / sizeof(WIFI_LIST[0]);
 #define WIFI_TIMEOUT_MS  15000    // timeout per jaringan (ms)
 
 // ----- InfluxDB v2 -----
-// IP LAN PC/server InfluxDB. Cek IP terbaru dengan: ipconfig
-#define INFLUX_URL       "http://10.4.75.52:8086"
+// Server ditemukan lewat NAMA (mDNS) supaya tidak perlu ganti IP terus.
+//   INFLUX_HOST     : hostname PC (tanpa ".local"). Cek: buka CMD, ketik "hostname"
+//   INFLUX_FALLBACK : IP cadangan kalau mDNS gagal (cek: ipconfig)
+#define INFLUX_HOST      "Salman"
+#define INFLUX_FALLBACK  "10.109.10.188"
+#define INFLUX_PORT      8086
 #define INFLUX_ORG       "smart-agri"
 #define INFLUX_BUCKET    "agriculture"
 #define INFLUX_TOKEN     "smart-agri-dev-token"
@@ -270,6 +275,28 @@ static String fnum(float v, int dec = 2) {
   return String(v, dec);
 }
 
+// Cari IP server InfluxDB:
+//   1) coba resolve hostname (mDNS ".local" atau DNS biasa)
+//   2) kalau gagal, pakai INFLUX_FALLBACK (IP)
+// Hasil disimpan agar tidak resolve berulang kali.
+static String resolveServerHost() {
+  static String cached;
+  if (cached.length() > 0) return cached;
+
+  // Coba resolve "Salman.local" lewat WiFi.hostByName (mDNS/LLMNR)
+  IPAddress ip;
+  String name = String(INFLUX_HOST) + ".local";
+  if (WiFi.hostByName(name.c_str(), ip)) {
+    cached = ip.toString();
+    Serial.printf("[INFLUX] resolve %s -> %s\n", name.c_str(), cached.c_str());
+    return cached;
+  }
+  // Fallback ke IP
+  Serial.printf("[INFLUX] resolve gagal, pakai IP: %s\n", INFLUX_FALLBACK);
+  cached = INFLUX_FALLBACK;
+  return cached;
+}
+
 bool influxWrite(const SensorData &d, const Prediction &p, time_t epochSec) {
   if (WiFi.status() != WL_CONNECTED) return false;
 
@@ -289,7 +316,8 @@ bool influxWrite(const SensorData &d, const Prediction &p, time_t epochSec) {
   if (epochSec > 1600000000UL)
     line += " " + String((uint64_t)epochSec * 1000000000ULL);
 
-  String url = String(INFLUX_URL) + "/api/v2/write?org=" + INFLUX_ORG +
+  String url = "http://" + resolveServerHost() + ":" + String(INFLUX_PORT) +
+               "/api/v2/write?org=" + INFLUX_ORG +
                "&bucket=" + INFLUX_BUCKET + "&precision=ns";
 
   WiFiClient client;
@@ -384,6 +412,10 @@ static bool tryConnect(const char* ssid, const char* pass) {
 void connectWiFi() {
   for (int i = 0; i < WIFI_LIST_COUNT; i++) {
     if (tryConnect(WIFI_LIST[i].ssid, WIFI_LIST[i].pass)) {
+      // Mulai mDNS agar bisa menemukan server InfluxDB lewat nama
+      if (MDNS.begin("esp8266-agri")) {
+        Serial.println(F("[mDNS] Aktif (esp8266-agri.local)"));
+      }
       return;
     }
   }
